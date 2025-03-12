@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Atualizar Estoque - Sistema PDV{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col">
+        <h2><i class="fas fa-boxes me-2"></i>Atualizar Estoque</h2>
+        <p class="text-muted">Registre entradas ou saídas de estoque</p>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('products.show', product_id=product.id) }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Voltar
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informações do Produto</h5>
+            </div>
+            <div class="card-body">
+                <h4 class="card-title">{{ product.name }}</h4>
+                <p class="card-text">
+                    <strong>Código:</strong> {{ product.code }}<br>
+                    <strong>Categoria:</strong> {{ product.category or 'Não categorizado' }}<br>
+                    <strong>Preço:</strong> R$ {{ "%.2f"|format(product.price) }}<br>
+                    <strong>Estoque Atual:</strong> 
+                    {% if product.is_low_stock() %}
+                    <span class="badge bg-danger">{{ product.stock_quantity }}</span>
+                    {% else %}
+                    <span class="badge bg-success">{{ product.stock_quantity }}</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>Movimentação de Estoque</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('products.update_stock', product_id=product.id) }}">
+                    <div class="mb-3">
+                        <label for="movement_type" class="form-label">Tipo de Movimentação <span class="text-danger">*</span></label>
+                        <select class="form-select" id="movement_type" name="movement_type" required>
+                            <option value="entrada">Entrada de Estoque</option>
+                            <option value="saída">Saída de Estoque</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantidade <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" min="1" required>
+                        <small class="text-muted">Quantidade a ser adicionada ou removida do estoque</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="reference" class="form-label">Referência</label>
+                        <input type="text" class="form-control" id="reference" name="reference">
+                        <small class="text-muted">Número da nota fiscal, ajuste manual, etc.</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Observações</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('products.show', product_id=product.id) }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-save me-2"></i>Registrar Movimentação
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Validação para saída de estoque
+        $('#movement_type').on('change', function() {
+            if ($(this).val() === 'saída') {
+                $('#quantity').attr('max', {{ product.stock_quantity }});
+            } else {
+                $('#quantity').removeAttr('max');
+            }
+        });
+        
+        // Trigger the change event to set initial state
+        $('#movement_type').trigger('change');
+    });
+</script>
+{% endblock %}

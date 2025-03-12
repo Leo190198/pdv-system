@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Produto - Sistema PDV{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col">
+        <h2><i class="fas fa-edit me-2"></i>Editar Produto</h2>
+        <p class="text-muted">Atualize as informações do produto</p>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('products.show', product_id=product.id) }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Voltar
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-box me-2"></i>Informações do Produto</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('products.edit', product_id=product.id) }}" enctype="multipart/form-data">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="name" class="form-label">Nome do Produto <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="name" name="name" value="{{ product.name }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="code" class="form-label">Código <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="code" name="code" value="{{ product.code }}" required>
+                    <small class="text-muted">Código único para identificação do produto (SKU, código de barras, etc.)</small>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="price" class="form-label">Preço <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text">R$</span>
+                        <input type="number" class="form-control" id="price" name="price" step="0.01" min="0" value="{{ product.price }}" required>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label for="stock_quantity" class="form-label">Estoque Atual</label>
+                    <input type="number" class="form-control" id="stock_quantity" value="{{ product.stock_quantity }}" readonly>
+                    <small class="text-muted">Para atualizar o estoque, use a opção "Atualizar Estoque"</small>
+                </div>
+                <div class="col-md-4">
+                    <label for="category" class="form-label">Categoria</label>
+                    <input type="text" class="form-control" id="category" name="category" value="{{ product.category or '' }}" list="categories">
+                    <datalist id="categories">
+                        {% for category in categories %}
+                        <option value="{{ category }}">
+                        {% endfor %}
+                    </datalist>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="description" class="form-label">Descrição</label>
+                <textarea class="form-control" id="description" name="description" rows="3">{{ product.description or '' }}</textarea>
+            </div>
+            
+            <div class="mb-3">
+                <label for="image" class="form-label">Imagem do Produto</label>
+                {% if product.image_path %}
+                <div class="mb-2">
+                    <img src="{{ url_for('static', filename=product.image_path) }}" alt="{{ product.name }}" class="img-thumbnail" style="max-height: 100px;">
+                </div>
+                {% endif %}
+                <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                <small class="text-muted">Formatos aceitos: JPG, PNG. Tamanho máximo: 2MB. Deixe em branco para manter a imagem atual.</small>
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{{ url_for('products.show', product_id=product.id) }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Salvar Alterações
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

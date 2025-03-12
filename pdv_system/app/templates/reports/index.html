@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Relatórios - Sistema PDV{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="fas fa-chart-bar me-2"></i>Relatórios</h2>
+        <p class="text-muted">Análise de dados e estatísticas do sistema</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Relatório de Vendas -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Relatório de Vendas</h5>
+            </div>
+            <div class="card-body">
+                <p>Análise de vendas por período, com gráficos e estatísticas.</p>
+                <ul>
+                    <li>Total de vendas por período</li>
+                    <li>Faturamento diário, semanal e mensal</li>
+                    <li>Comparativo de métodos de pagamento</li>
+                </ul>
+            </div>
+            <div class="card-footer bg-transparent border-0">
+                <a href="{{ url_for('reports.sales_report') }}" class="btn btn-primary w-100">
+                    <i class="fas fa-chart-line me-2"></i>Ver Relatório de Vendas
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Relatório de Produtos -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-box me-2"></i>Relatório de Produtos</h5>
+            </div>
+            <div class="card-body">
+                <p>Análise de produtos mais vendidos e estoque.</p>
+                <ul>
+                    <li>Produtos mais vendidos</li>
+                    <li>Produtos com estoque baixo</li>
+                    <li>Valor total em estoque</li>
+                </ul>
+            </div>
+            <div class="card-footer bg-transparent border-0">
+                <a href="{{ url_for('reports.products_report') }}" class="btn btn-success w-100">
+                    <i class="fas fa-chart-pie me-2"></i>Ver Relatório de Produtos
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Relatório de Estoque -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-boxes me-2"></i>Relatório de Estoque</h5>
+            </div>
+            <div class="card-body">
+                <p>Análise completa do estoque atual.</p>
+                <ul>
+                    <li>Listagem completa de produtos</li>
+                    <li>Filtros por categoria</li>
+                    <li>Valor total do estoque</li>
+                </ul>
+            </div>
+            <div class="card-footer bg-transparent border-0">
+                <a href="{{ url_for('reports.stock_report') }}" class="btn btn-warning w-100">
+                    <i class="fas fa-warehouse me-2"></i>Ver Relatório de Estoque
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Exportação de Dados -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-file-export me-2"></i>Exportação de Dados</h5>
+            </div>
+            <div class="card-body">
+                <p>Exporte dados do sistema para análise externa.</p>
+                <ul>
+                    <li>Exportação de vendas em CSV</li>
+                    <li>Exportação de produtos em CSV</li>
+                    <li>Filtros por período e categoria</li>
+                </ul>
+            </div>
+            <div class="card-footer bg-transparent border-0">
+                <div class="row">
+                    <div class="col-6">
+                        <a href="{{ url_for('reports.export_sales', format='csv') }}" class="btn btn-info w-100">
+                            <i class="fas fa-file-csv me-2"></i>Exportar Vendas
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('reports.export_products', format='csv') }}" class="btn btn-info w-100">
+                            <i class="fas fa-file-csv me-2"></i>Exportar Produtos
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

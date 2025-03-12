@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}Relatório de Produtos - Sistema PDV{% endblock %}
+
+{% block styles %}
+<style>
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 20px;
+    }
+    
+    .product-card {
+        transition: transform 0.3s;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-5px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col">
+        <h2><i class="fas fa-chart-pie me-2"></i>Relatório de Produtos</h2>
+        <p class="text-muted">Análise de produtos mais vendidos e estoque</p>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('reports.index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Voltar
+        </a>
+        <a href="{{ url_for('reports.export_products', format='csv') }}" class="btn btn-primary">
+            <i class="fas fa-file-export me-2"></i>Exportar CSV
+        </a>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <form method="GET" action="{{ url_for('reports.products_report') }}" class="row g-3">
+            <div class="col-md-4">
+                <label for="start_date" class="form-label">Data Inicial</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+            </div>
+            <div class="col-md-4">
+                <label for="end_date" class="form-label">Data Final</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+            </div>
+            <div class="col-md-2">
+                <label for="limit" class="form-label">Limite</label>
+                <select class="form-select" id="limit" name="limit">
+                    <option value="5" {% if limit == 5 %}selected{% endif %}>5</option>
+                    <option value="10" {% if limit == 10 %}selected{% endif %}>10</option>
+                    <option value="20" {% if limit == 20 %}selected{% endif %}>20</option>
+                    <option value="50" {% if limit == 50 %}selected{% endif %}>50</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter me-2"></i>Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Gráficos -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Produtos Mais Vendidos (Quantidade)</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="quantityChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Produtos Mais Vendidos (Faturamento)</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabela de Produtos Mais Vendidos -->
+<div class="card mb-4">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Top {{ limit }} Produtos Mais Vendidos</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Produto</th>
+                        <th>Código</th>
+                        <th>Quantidade Vendida</th>
+                        <th>Faturamento</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products_data %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ product.name }}</td>
+                        <td>{{ product.code }}</td>
+                        <td>{{ product.quantity_sold }}</td>
+                        <td>R$ {{ "%.2f"|format(product.total_revenue) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Produtos com Estoque Baixo -->
+<div class="card">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Produtos com Estoque Baixo</h5>
+    </div>
+    <div class="card-body">
+        {% if low_stock_products %}
+        <div class="row">
+            {% for product in low_stock_products %}
+            <div class="col-md-4 mb-3">
+                <div class="card product-card h-100 border-danger">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ product.name }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">{{ product.code }}</h6>
+                        <p class="card-text">
+                            <strong>Categoria:</strong> {{ product.category or 'Não categorizado' }}<br>
+                            <strong>Preço:</strong> R$ {{ "%.2f"|format(product.price) }}<br>
+                            <strong>Estoque:</strong> <span class="badge bg-danger">{{ product.stock_quantity }}</span>
+                        </p>
+                    </div>
+                    <div class="card-footer bg-transparent border-0">
+                        <a href="{{ url_for('products.update_stock', product_id=product.id) }}" class="btn btn-sm btn-outline-danger w-100">
+                            <i class="fas fa-plus-circle me-2"></i>Repor Estoque
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle me-2"></i>Não há produtos com estoque baixo.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Dados para os gráficos
+        const productNames = [{% for product in products_data %}'{{ product.name }}',{% endfor %}];
+        const quantitiesSold = [{% for product in products_data %}{{ product.quantity_sold }},{% endfor %}];
+        const revenues = [{% for product in products_data %}{{ product.total_revenue }},{% endfor %}];
+        
+        // Configuração do gráfico de quantidade
+        const quantityConfig = {
+            type: 'bar',
+            data: {
+                labels: productNames,
+                datasets: [{
+                    label: 'Quantidade Vendida',
+                    data: quantitiesSold,
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Quantidade Vendida'
+                        }
+                    }
+                }
+            }
+        };
+        
+        // Configuração do gráfico de faturamento
+        const revenueConfig = {
+            type: 'bar',
+            data: {
+                labels: productNames,
+                datasets: [{
+                    label: 'Faturamento (R$)',
+                    data: revenues,
+                    backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Faturamento (R$)'
+                        }
+                    }
+                }
+            }
+        };
+        
+        // Renderiza os gráficos
+        const quantityChart = new Chart(
+            document.getElementById('quantityChart'),
+            quantityConfig
+        );
+        
+        const revenueChart = new Chart(
+            document.getElementById('revenueChart'),
+            revenueConfig
+        );
+    });
+</script>
+{% endblock %}

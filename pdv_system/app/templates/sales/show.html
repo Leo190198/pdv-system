@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Detalhes da Venda - Sistema PDV{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col">
+        <h2><i class="fas fa-shopping-cart me-2"></i>Detalhes da Venda</h2>
+        <p class="text-muted">Informações completas da venda</p>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('sales.index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Voltar
+        </a>
+        <a href="{{ url_for('sales.receipt', sale_id=sale.id) }}" class="btn btn-primary">
+            <i class="fas fa-receipt me-2"></i>Recibo
+        </a>
+        {% if sale.status != 'cancelada' %}
+        <button type="button" class="btn btn-danger" onclick="confirmCancel()">
+            <i class="fas fa-times me-2"></i>Cancelar Venda
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informações da Venda</h5>
+            </div>
+            <div class="card-body">
+                <h4 class="card-title">Venda #{{ sale.sale_number }}</h4>
+                <p class="card-text">
+                    <strong>Data:</strong> {{ sale.created_at.strftime('%d/%m/%Y %H:%M') }}<br>
+                    <strong>Vendedor:</strong> {{ sale.seller.username }}<br>
+                    <strong>Total:</strong> R$ {{ "%.2f"|format(sale.total_amount) }}<br>
+                    <strong>Status:</strong> 
+                    {% if sale.status == 'concluída' %}
+                    <span class="badge bg-success">Concluída</span>
+                    {% elif sale.status == 'cancelada' %}
+                    <span class="badge bg-danger">Cancelada</span>
+                    {% elif sale.status == 'pendente' %}
+                    <span class="badge bg-warning text-dark">Pendente</span>
+                    {% endif %}
+                </p>
+                
+                <hr>
+                
+                <h5>Pagamento</h5>
+                <p>
+                    <strong>Método:</strong> 
+                    {% if sale.payment_method == 'dinheiro' %}
+                    <span class="badge bg-success">Dinheiro</span>
+                    {% elif sale.payment_method == 'cartao_credito' %}
+                    <span class="badge bg-primary">Cartão de Crédito</span>
+                    {% elif sale.payment_method == 'cartao_debito' %}
+                    <span class="badge bg-info">Cartão de Débito</span>
+                    {% elif sale.payment_method == 'pix' %}
+                    <span class="badge bg-warning text-dark">PIX</span>
+                    {% else %}
+                    <span class="badge bg-secondary">{{ sale.payment_method }}</span>
+                    {% endif %}
+                </p>
+                
+                {% set payment_details = sale.get_payment_details_dict() %}
+                {% if payment_details %}
+                <div class="card bg-light mb-3">
+                    <div class="card-body">
+                        {% if sale.payment_method == 'dinheiro' %}
+                        <p class="mb-1">
+                            <strong>Valor Recebido:</strong> R$ {{ "%.2f"|format(payment_details.get('received', 0)) }}
+                        </p>
+                        <p class="mb-1">
+                            <strong>Troco:</strong> R$ {{ "%.2f"|format(payment_details.get('change', 0)) }}
+                        </p>
+                        {% elif sale.payment_method in ['cartao_credito', 'cartao_debito'] %}
+                        <p class="mb-1">
+                            <strong>Final do Cartão:</strong> {{ payment_details.get('card_number', '') }}
+                        </p>
+                        {% if sale.payment_method == 'cartao_credito' %}
+                        <p class="mb-1">
+                            <strong>Parcelas:</strong> {{ payment_details.get('installments', '1') }}x
+                        </p>
+                        {% endif %}
+                        {% elif sale.payment_method == 'pix' %}
+                        <p class="mb-1">
+                            <strong>Código PIX:</strong> {{ payment_details.get('pix_code', '') }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-list me-2"></i>Itens da Venda</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Código</th>
+                                <th>Preço Unit.</th>
+                                <th>Qtd</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in sale.items %}
+                            <tr>
+                                <td>{{ item.product.name }}</td>
+                                <td>{{ item.product.code }}</td>
+                                <td>R$ {{ "%.2f"|format(item.unit_price) }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>R$ {{ "%.2f"|format(item.subtotal) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-active">
+                                <th colspan="4" class="text-end">Total:</th>
+                                <th>R$ {{ "%.2f"|format(sale.total_amount) }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Cancelamento -->
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Confirmar Cancelamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja cancelar esta venda? Esta ação não pode ser desfeita e os produtos serão devolvidos ao estoque.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Não, Voltar</button>
+                <form method="POST" action="{{ url_for('sales.cancel', sale_id=sale.id) }}">
+                    <button type="submit" class="btn btn-danger">Sim, Cancelar Venda</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function confirmCancel() {
+        var modal = new bootstrap.Modal(document.getElementById('cancelModal'));
+        modal.show();
+    }
+</script>
+{% endblock %}

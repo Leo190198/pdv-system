@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Novo Produto - Sistema PDV{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col">
+        <h2><i class="fas fa-plus-circle me-2"></i>Novo Produto</h2>
+        <p class="text-muted">Cadastre um novo produto no sistema</p>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('products.index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Voltar
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-box me-2"></i>Informações do Produto</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('products.create') }}" enctype="multipart/form-data">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="name" class="form-label">Nome do Produto <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="name" name="name" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="code" class="form-label">Código <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="code" name="code" required>
+                    <small class="text-muted">Código único para identificação do produto (SKU, código de barras, etc.)</small>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="price" class="form-label">Preço <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text">R$</span>
+                        <input type="number" class="form-control" id="price" name="price" step="0.01" min="0" required>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label for="stock_quantity" class="form-label">Estoque Inicial</label>
+                    <input type="number" class="form-control" id="stock_quantity" name="stock_quantity" min="0" value="0">
+                </div>
+                <div class="col-md-4">
+                    <label for="category" class="form-label">Categoria</label>
+                    <input type="text" class="form-control" id="category" name="category" list="categories">
+                    <datalist id="categories">
+                        {% for category in categories %}
+                        <option value="{{ category }}">
+                        {% endfor %}
+                    </datalist>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="description" class="form-label">Descrição</label>
+                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+            </div>
+            
+            <div class="mb-3">
+                <label for="image" class="form-label">Imagem do Produto</label>
+                <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                <small class="text-muted">Formatos aceitos: JPG, PNG. Tamanho máximo: 2MB</small>
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <button type="reset" class="btn btn-outline-secondary">
+                    <i class="fas fa-eraser me-2"></i>Limpar
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Salvar Produto
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

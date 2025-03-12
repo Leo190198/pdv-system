@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+
+{% block title %}Relatório de Estoque - Sistema PDV{% endblock %}
+
+{% block styles %}
+<style>
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 20px;
+    }
+    
+    .stats-card {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .sort-icon {
+        font-size: 0.8rem;
+        margin-left: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col">
+        <h2><i class="fas fa-warehouse me-2"></i>Relatório de Estoque</h2>
+        <p class="text-muted">Análise completa do estoque atual</p>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('reports.index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Voltar
+        </a>
+        <a href="{{ url_for('reports.export_products', format='csv') }}" class="btn btn-primary">
+            <i class="fas fa-file-export me-2"></i>Exportar CSV
+        </a>
+    </div>
+</div>
+
+<!-- Resumo -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card stats-card h-100 border-primary">
+            <div class="card-body">
+                <h5 class="card-title text-primary">Total de Produtos</h5>
+                <div class="display-4 mb-2">{{ total_products }}</div>
+                <p class="card-text">produtos cadastrados no sistema</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stats-card h-100 border-success">
+            <div class="card-body">
+                <h5 class="card-title text-success">Valor Total em Estoque</h5>
+                <div class="display-4 mb-2">R$ {{ "%.2f"|format(total_stock_value) }}</div>
+                <p class="card-text">soma do valor de todos os produtos</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stats-card h-100 border-info">
+            <div class="card-body">
+                <h5 class="card-title text-info">Preço Médio</h5>
+                <div class="display-4 mb-2">R$ {{ "%.2f"|format(avg_price) }}</div>
+                <p class="card-text">média de preço dos produtos</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros e Tabela -->
+<div class="card">
+    <div class="card-header bg-light">
+        <form method="GET" action="{{ url_for('reports.stock_report') }}" class="row g-3">
+            <div class="col-md-4">
+                <label for="category" class="form-label">Categoria</label>
+                <select class="form-select" id="category" name="category">
+                    <option value="">Todas as categorias</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="order_by" class="form-label">Ordenar por</label>
+                <select class="form-select" id="order_by" name="order_by">
+                    <option value="name" {% if order_by == 'name' %}selected{% endif %}>Nome</option>
+                    <option value="stock" {% if order_by == 'stock' %}selected{% endif %}>Estoque</option>
+                    <option value="price" {% if order_by == 'price' %}selected{% endif %}>Preço</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="order_dir" class="form-label">Direção</label>
+                <select class="form-select" id="order_dir" name="order_dir">
+                    <option value="asc" {% if order_dir == 'asc' %}selected{% endif %}>Crescente</option>
+                    <option value="desc" {% if order_dir == 'desc' %}selected{% endif %}>Decrescente</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter me-2"></i>Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>
+                            <a href="{{ url_for('reports.stock_report', category=selected_category, order_by='name', order_dir='asc' if order_by == 'name' and order_dir == 'desc' else 'desc') }}" class="text-decoration-none text-dark">
+                                Nome
+                                {% if order_by == 'name' %}
+                                <i class="fas fa-sort-{{ 'down' if order_dir == 'asc' else 'up' }} sort-icon"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>Código</th>
+                        <th>Categoria</th>
+                        <th>
+                            <a href="{{ url_for('reports.stock_report', category=selected_category, order_by='price', order_dir='asc' if order_by == 'price' and order_dir == 'desc' else 'desc') }}" class="text-decoration-none text-dark">
+                                Preço
+                                {% if order_by == 'price' %}
+                                <i class="fas fa-sort-{{ 'down' if order_dir == 'asc' else 'up' }} sort-icon"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="{{ url_for('reports.stock_report', category=selected_category, order_by='stock', order_dir='asc' if order_by == 'stock' and order_dir == 'desc' else 'desc') }}" class="text-decoration-none text-dark">
+                                Estoque
+                                {% if order_by == 'stock' %}
+                                <i class="fas fa-sort-{{ 'down' if order_dir == 'asc' else 'up' }} sort-icon"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>Valor Total</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr>
+                        <td>{{ product.name }}</td>
+                        <td>{{ product.code }}</td>
+                        <td>{{ product.category or '-' }}</td>
+                        <td>R$ {{ "%.2f"|format(product.price) }}</td>
+                        <td>
+                            {% if product.is_low_stock() %}
+                            <span class="badge bg-danger">{{ product.stock_quantity }}</span>
+                            {% else %}
+                            <span class="badge bg-success">{{ product.stock_quantity }}</span>
+                            {% endif %}
+                        </td>
+                        <td>R$ {{ "%.2f"|format(product.price * product.stock_quantity) }}</td>
+                        <td>
+                            {% if product.active %}
+                            <span class="badge bg-success">Ativo</span>
+                            {% else %}
+                            <span class="badge bg-danger">Inativo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('products.show', product_id=product.id) }}" class="btn btn-info" title="Detalhes">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ url_for('products.update_stock', product_id=product.id) }}" class="btn btn-warning" title="Atualizar Estoque">
+                                    <i class="fas fa-boxes"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="table-active">
+                        <th colspan="4">Total</th>
+                        <th>{{ products|sum(attribute='stock_quantity') }}</th>
+                        <th>R$ {{ "%.2f"|format(total_stock_value) }}</th>
+                        <th colspan="2"></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos -->
+<div class="row mt-4">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Distribuição por Categoria</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Valor em Estoque por Categoria</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="valueChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Agrupa produtos por categoria
+        const products = [
+            {% for product in products %}
+            {
+                name: "{{ product.name }}",
+                category: "{{ product.category or 'Sem categoria' }}",
+                price: {{ product.price }},
+                stock: {{ product.stock_quantity }},
+                value: {{ product.price * product.stock_quantity }}
+            },
+            {% endfor %}
+        ];
+        
+        // Função para agrupar produtos por categoria
+        function groupByCategory(products) {
+            const categories = {};
+            
+            products.forEach(product => {
+                if (!categories[product.category]) {
+                    categories[product.category] = {
+                        count: 0,
+                        value: 0
+                    };
+                }
+                
+                categories[product.category].count++;
+                categories[product.category].value += product.value;
+            });
+            
+            return categories;
+        }
+        
+        const categoriesData = groupByCategory(products);
+        const categoryLabels = Object.keys(categoriesData);
+        const categoryCounts = categoryLabels.map(cat => categoriesData[cat].count);
+        const categoryValues = categoryLabels.map(cat => categoriesData[cat].value);
+        
+        // Configuração do gráfico de distribuição por categoria
+        const categoryConfig = {
+            type: 'pie',
+            data: {
+                labels: categoryLabels,
+                datasets: [{
+                    data: categoryCounts,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(153, 102, 255, 0.7)',
+                        'rgba(255, 159, 64, 0.7)',
+                        'rgba(199, 199, 199, 0.7)',
+                        'rgba(83, 102, 255, 0.7)',
+                        'rgba(40, 159, 64, 0.7)',
+                        'rgba(210, 199, 199, 0.7)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value} produtos (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        
+        // Configuração do gráfico de valor em estoque por categoria
+        const valueConfig = {
+            type: 'bar',
+            data: {
+                labels: categoryLabels,
+                datasets: [{
+                    label: 'Valor em Estoque (R$)',
+                    data: categoryValues,
+                    backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Valor em Estoque (R$)'
+                        }
+                    }
+                }
+            }
+        };
+        
+        // Renderiza os gráficos
+        const categoryChart = new Chart(
+            document.getElementById('categoryChart'),
+            categoryConfig
+        );
+        
+        const valueChart = new Chart(
+            document.getElementById('valueChart'),
+            valueConfig
+        );
+    });
+</script>
+{% endblock %}

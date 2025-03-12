@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Usuário - Sistema PDV{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col">
+        <h2><i class="fas fa-user-edit me-2"></i>Editar Usuário</h2>
+        <p class="text-muted">Atualize as informações do usuário</p>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('auth.users') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Voltar
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-user me-2"></i>Informações do Usuário</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('auth.edit_user', user_id=user.id) }}">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Nome de Usuário <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">E-mail <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Nova Senha</label>
+                        <input type="password" class="form-control" id="password" name="password">
+                        <small class="text-muted">Deixe em branco para manter a senha atual</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Função <span class="text-danger">*</span></label>
+                        <select class="form-select" id="role" name="role" required>
+                            <option value="vendedor" {% if user.role == 'vendedor' %}selected{% endif %}>Vendedor</option>
+                            <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Administrador</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="active" name="active" {% if user.active %}checked{% endif %}>
+                        <label class="form-check-label" for="active">Usuário Ativo</label>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('auth.users') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

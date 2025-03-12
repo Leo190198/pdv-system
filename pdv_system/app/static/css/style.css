@@ -1,0 +1,132 @@
+/* Estilos gerais */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+/* Estilos para o navbar */
+.navbar-brand {
+    font-weight: bold;
+}
+
+/* Estilos para cards */
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    font-weight: 500;
+}
+
+/* Estilos para tabelas */
+.table th {
+    background-color: #f8f9fa;
+}
+
+/* Estilos para formulários */
+.form-label {
+    font-weight: 500;
+}
+
+/* Estilos para botões */
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Estilos para badges */
+.badge {
+    font-weight: 500;
+}
+
+/* Estilos para alertas */
+.alert {
+    margin-bottom: 1rem;
+}
+
+/* Estilos para o dashboard */
+.dashboard-stat {
+    text-align: center;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.dashboard-stat .stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-stat .stat-label {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #6c757d;
+}
+
+/* Estilos para a página de login */
+.login-container {
+    max-width: 400px;
+    margin: 2rem auto;
+}
+
+/* Estilos para a página de vendas */
+.product-card {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Estilos para recibos */
+.receipt {
+    font-family: 'Courier New', Courier, monospace;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    max-width: 80mm;
+    margin: 0 auto;
+}
+
+.receipt-header {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.receipt-footer {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.8rem;
+}
+
+/* Estilos para relatórios */
+.report-filters {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Estilos para paginação */
+.pagination {
+    margin-bottom: 0;
+}
+
+/* Estilos para responsividade */
+@media (max-width: 768px) {
+    .dashboard-stat {
+        padding: 1rem;
+    }
+    
+    .dashboard-stat .stat-value {
+        font-size: 2rem;
+    }
+}

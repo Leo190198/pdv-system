@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}Relatório de Vendas - Sistema PDV{% endblock %}
+
+{% block styles %}
+<style>
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 20px;
+    }
+    
+    .stats-card {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col">
+        <h2><i class="fas fa-chart-line me-2"></i>Relatório de Vendas</h2>
+        <p class="text-muted">Análise de vendas por período</p>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('reports.index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Voltar
+        </a>
+        <a href="{{ url_for('reports.export_sales', format='csv', start_date=start_date, end_date=end_date) }}" class="btn btn-primary">
+            <i class="fas fa-file-export me-2"></i>Exportar CSV
+        </a>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <form method="GET" action="{{ url_for('reports.sales_report') }}" class="row g-3">
+            <div class="col-md-3">
+                <label for="start_date" class="form-label">Data Inicial</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+            </div>
+            <div class="col-md-3">
+                <label for="end_date" class="form-label">Data Final</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+            </div>
+            <div class="col-md-3">
+                <label for="group_by" class="form-label">Agrupar por</label>
+                <select class="form-select" id="group_by" name="group_by">
+                    <option value="day" {% if group_by == 'day' %}selected{% endif %}>Dia</option>
+                    <option value="week" {% if group_by == 'week' %}selected{% endif %}>Semana</option>
+                    <option value="month" {% if group_by == 'month' %}selected{% endif %}>Mês</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter me-2"></i>Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Resumo -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card stats-card h-100 border-primary">
+            <div class="card-body">
+                <h5 class="card-title text-primary">Total de Vendas</h5>
+                <div class="d-flex align-items-center">
+                    <div class="display-4 me-3">{{ total_sales }}</div>
+                    <div>
+                        <p class="mb-0">vendas no período</p>
+                        <p class="text-muted">{{ start_date }} até {{ end_date }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card stats-card h-100 border-success">
+            <div class="card-body">
+                <h5 class="card-title text-success">Faturamento Total</h5>
+                <div class="d-flex align-items-center">
+                    <div class="display-4 me-3">R$ {{ "%.2f"|format(total_revenue) }}</div>
+                    <div>
+                        <p class="mb-0">receita no período</p>
+                        <p class="text-muted">{{ start_date }} até {{ end_date }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Vendas por Período</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Métodos de Pagamento</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="paymentChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabela de Dados -->
+<div class="card">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0"><i class="fas fa-table me-2"></i>Dados Detalhados</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Quantidade de Vendas</th>
+                        <th>Faturamento</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in sales_data %}
+                    <tr>
+                        <td>{{ item.date }}</td>
+                        <td>{{ item.count }}</td>
+                        <td>R$ {{ "%.2f"|format(item.total) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="table-active">
+                        <th>Total</th>
+                        <th>{{ total_sales }}</th>
+                        <th>R$ {{ "%.2f"|format(total_revenue) }}</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Dados para o gráfico de vendas
+        const salesData = {
+            labels: [{% for item in sales_data %}'{{ item.date }}',{% endfor %}],
+            datasets: [
+                {
+                    label: 'Quantidade de Vendas',
+                    data: [{% for item in sales_data %}{{ item.count }},{% endfor %}],
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Faturamento (R$)',
+                    data: [{% for item in sales_data %}{{ item.total }},{% endfor %}],
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1,
+                    type: 'line',
+                    yAxisID: 'y1'
+                }
+            ]
+        };
+
+        // Configuração do gráfico de vendas
+        const salesConfig = {
+            type: 'bar',
+            data: salesData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Quantidade de Vendas'
+                        }
+                    },
+                    y1: {
+                        beginAtZero: true,
+                        position: 'right',
+                        grid: {
+                            drawOnChartArea: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Faturamento (R$)'
+                        }
+                    }
+                }
+            }
+        };
+
+        // Renderiza o gráfico de vendas
+        const salesChart = new Chart(
+            document.getElementById('salesChart'),
+            salesConfig
+        );
+
+        // Dados para o gráfico de métodos de pagamento
+        const paymentLabels = [{% for item in payment_data %}'{{ item.method }}',{% endfor %}];
+        const paymentCounts = [{% for item in payment_data %}{{ item.count }},{% endfor %}];
+        const paymentTotals = [{% for item in payment_data %}{{ item.total }},{% endfor %}];
+
+        // Configuração do gráfico de métodos de pagamento
+        const paymentConfig = {
+            type: 'pie',
+            data: {
+                labels: paymentLabels,
+                datasets: [{
+                    data: paymentTotals,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(153, 102, 255, 0.7)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const count = paymentCounts[context.dataIndex];
+                                return `${label}: R$ ${value.toFixed(2)} (${count} vendas)`;
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        // Renderiza o gráfico de métodos de pagamento
+        const paymentChart = new Chart(
+            document.getElementById('paymentChart'),
+            paymentConfig
+        );
+    });
+</script>
+{% endblock %}

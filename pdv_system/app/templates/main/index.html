@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Sistema PDV{% endblock %}
+
+{% block styles %}
+<style>
+    .dashboard-card {
+        transition: transform 0.3s;
+    }
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
+        <p class="text-muted">Visão geral do sistema</p>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('sales.new') }}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-2"></i>Nova Venda
+        </a>
+    </div>
+</div>
+
+<!-- Cards de Estatísticas -->
+<div class="row mb-4">
+    <!-- Vendas do Dia -->
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card dashboard-card h-100 border-primary">
+            <div class="card-body text-center">
+                <h5 class="card-title text-primary">Vendas Hoje</h5>
+                <div class="display-4 mb-2">{{ today_sales }}</div>
+                <p class="card-text">Total: R$ {{ "%.2f"|format(today_revenue) }}</p>
+            </div>
+            <div class="card-footer bg-transparent border-0 text-center">
+                <a href="{{ url_for('sales.index') }}" class="btn btn-sm btn-outline-primary">Ver Detalhes</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Vendas da Semana -->
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card dashboard-card h-100 border-success">
+            <div class="card-body text-center">
+                <h5 class="card-title text-success">Vendas da Semana</h5>
+                <div class="display-4 mb-2">{{ week_sales }}</div>
+                <p class="card-text">Total: R$ {{ "%.2f"|format(week_revenue) }}</p>
+            </div>
+            <div class="card-footer bg-transparent border-0 text-center">
+                <a href="{{ url_for('reports.sales_report') }}" class="btn btn-sm btn-outline-success">Ver Relatório</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Total de Produtos -->
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card dashboard-card h-100 border-info">
+            <div class="card-body text-center">
+                <h5 class="card-title text-info">Total de Produtos</h5>
+                <div class="display-4 mb-2">{{ total_products }}</div>
+                <p class="card-text">Cadastrados no sistema</p>
+            </div>
+            <div class="card-footer bg-transparent border-0 text-center">
+                <a href="{{ url_for('products.index') }}" class="btn btn-sm btn-outline-info">Ver Produtos</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Produtos com Estoque Baixo -->
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card dashboard-card h-100 border-danger">
+            <div class="card-body text-center">
+                <h5 class="card-title text-danger">Estoque Baixo</h5>
+                <div class="display-4 mb-2">{{ low_stock_products }}</div>
+                <p class="card-text">Produtos para repor</p>
+            </div>
+            <div class="card-footer bg-transparent border-0 text-center">
+                <a href="{{ url_for('reports.stock_report') }}" class="btn btn-sm btn-outline-danger">Ver Estoque</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Produtos com Estoque Baixo -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Produtos com Estoque Baixo</h5>
+            </div>
+            <div class="card-body">
+                {% if low_stock_items %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Código</th>
+                                <th>Estoque</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in low_stock_items %}
+                            <tr>
+                                <td>{{ product.name }}</td>
+                                <td>{{ product.code }}</td>
+                                <td>
+                                    <span class="badge bg-danger">{{ product.stock_quantity }}</span>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('products.update_stock', product_id=product.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-plus-circle"></i> Repor
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center my-3">Não há produtos com estoque baixo.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Últimas Vendas -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Últimas Vendas</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_sales %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Número</th>
+                                <th>Data</th>
+                                <th>Total</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sale in recent_sales %}
+                            <tr>
+                                <td>{{ sale.sale_number }}</td>
+                                <td>{{ sale.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>R$ {{ "%.2f"|format(sale.total_amount) }}</td>
+                                <td>
+                                    <a href="{{ url_for('sales.show', sale_id=sale.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center my-3">Não há vendas recentes.</p>
+                {% endif %}
+            </div>
+            <div class="card-footer text-center">
+                <a href="{{ url_for('sales.index') }}" class="btn btn-sm btn-outline-primary">Ver Todas as Vendas</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Aqui podemos adicionar scripts para gráficos ou outras funcionalidades do dashboard
+    $(document).ready(function() {
+        console.log('Dashboard carregado!');
+    });
+</script>
+{% endblock %}

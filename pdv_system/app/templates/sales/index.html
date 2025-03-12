@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Vendas - Sistema PDV{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col">
+        <h2><i class="fas fa-shopping-cart me-2"></i>Vendas</h2>
+        <p class="text-muted">Histórico de vendas realizadas</p>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('sales.new') }}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-2"></i>Nova Venda
+        </a>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <form method="GET" action="{{ url_for('sales.index') }}" class="row g-3">
+            <div class="col-md-3">
+                <label for="start_date" class="form-label">Data Inicial</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+            </div>
+            <div class="col-md-3">
+                <label for="end_date" class="form-label">Data Final</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+            </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label">Status</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="all" {% if status == 'all' %}selected{% endif %}>Todos</option>
+                    <option value="concluída" {% if status == 'concluída' %}selected{% endif %}>Concluída</option>
+                    <option value="cancelada" {% if status == 'cancelada' %}selected{% endif %}>Cancelada</option>
+                    <option value="pendente" {% if status == 'pendente' %}selected{% endif %}>Pendente</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter me-2"></i>Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+    <div class="card-body">
+        {% if sales.items %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Número</th>
+                        <th>Data</th>
+                        <th>Vendedor</th>
+                        <th>Total</th>
+                        <th>Pagamento</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in sales.items %}
+                    <tr>
+                        <td>{{ sale.sale_number }}</td>
+                        <td>{{ sale.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>{{ sale.seller.username }}</td>
+                        <td>R$ {{ "%.2f"|format(sale.total_amount) }}</td>
+                        <td>
+                            {% if sale.payment_method == 'dinheiro' %}
+                            <span class="badge bg-success">Dinheiro</span>
+                            {% elif sale.payment_method == 'cartao_credito' %}
+                            <span class="badge bg-primary">Cartão de Crédito</span>
+                            {% elif sale.payment_method == 'cartao_debito' %}
+                            <span class="badge bg-info">Cartão de Débito</span>
+                            {% elif sale.payment_method == 'pix' %}
+                            <span class="badge bg-warning text-dark">PIX</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ sale.payment_method }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if sale.status == 'concluída' %}
+                            <span class="badge bg-success">Concluída</span>
+                            {% elif sale.status == 'cancelada' %}
+                            <span class="badge bg-danger">Cancelada</span>
+                            {% elif sale.status == 'pendente' %}
+                            <span class="badge bg-warning text-dark">Pendente</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('sales.show', sale_id=sale.id) }}" class="btn btn-info" title="Detalhes">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ url_for('sales.receipt', sale_id=sale.id) }}" class="btn btn-primary" title="Recibo">
+                                    <i class="fas fa-receipt"></i>
+                                </a>
+                                {% if sale.status != 'cancelada' %}
+                                <button type="button" class="btn btn-danger" title="Cancelar" onclick="confirmCancel({{ sale.id }})">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginação -->
+        <nav aria-label="Navegação de páginas">
+            <ul class="pagination justify-content-center">
+                {% if sales.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('sales.index', page=sales.prev_num, status=status, start_date=start_date, end_date=end_date) }}">Anterior</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Anterior</span>
+                </li>
+                {% endif %}
+                
+                {% for page_num in sales.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                        {% if page_num == sales.page %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('sales.index', page=page_num, status=status, start_date=start_date, end_date=end_date) }}">{{ page_num }}</a>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if sales.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('sales.index', page=sales.next_num, status=status, start_date=start_date, end_date=end_date) }}">Próxima</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Próxima</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>Nenhuma venda encontrada com os filtros selecionados.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Cancelamento -->
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Confirmar Cancelamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja cancelar esta venda? Esta ação não pode ser desfeita e os produtos serão devolvidos ao estoque.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Não, Voltar</button>
+                <form id="cancelForm" method="POST" action="">
+                    <button type="submit" class="btn btn-danger">Sim, Cancelar Venda</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function confirmCancel(saleId) {
+        // Atualiza o formulário com o ID da venda
+        document.getElementById('cancelForm').action = `/sales/${saleId}/cancel`;
+        
+        // Mostra o modal de confirmação
+        var modal = new bootstrap.Modal(document.getElementById('cancelModal'));
+        modal.show();
+    }
+</script>
+{% endblock %}
