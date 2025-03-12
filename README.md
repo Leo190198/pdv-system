@@ -136,7 +136,3 @@ Para contribuir com o projeto:
 ## Licença
 
 Este projeto está licenciado sob a licença MIT - veja o arquivo LICENSE para mais detalhes.
-
-## Contato
-
-Para dúvidas ou sugestões, entre em contato através do email: seu-email@exemplo.com
